@@ -427,11 +427,21 @@ convex_hull* hull;
 
 
 PYBIND11_MODULE(w2, m) {
-    // optional module docstring
+    // Optional module docstring
     m.doc() = "pybind11 for w2 code";
 
     py::class_<BFM>(m, "BFM")
         .def(py::init<int, int, py::array_t<double> &>())
-        .def("ctransform", &BFM::ctransform)
-        .def("pushforward", &BFM::pushforward);
+        .def("ctransform", &BFM::ctransform, "Compute c-transform on dual and phi")
+        .def("pushforward", &BFM::pushforward, "Compute the pushforward map for nu")
+        .def("compute_w2", &BFM::compute_w2, "Compute W2 distance between mu and nu")
+        .def("compute_2d_dual_inside", &BFM::compute_2d_dual_inside, "Compute 2D dual inside")
+        .def("compute_dual", &BFM::compute_dual, "Compute dual function based on indices and hull")
+        .def("transpose_doubles", &BFM::transpose_doubles, "Transpose a double array")
+        .def("get_convex_hull", &BFM::get_convex_hull, "Get convex hull indices")
+        .def("add_point", &BFM::add_point, "Add a point to the convex hull")
+        .def("interpolate_function", &BFM::interpolate_function, "Interpolate values from the function")
+        .def("calc_pushforward_map", &BFM::calc_pushforward_map, "Calculate the pushforward map")
+        .def("sampling_pushforward", &BFM::sampling_pushforward, "Sample values in the pushforward map")
+        .def("compute_dual_indices", &BFM::compute_dual_indices, "Compute dual indices");
 }

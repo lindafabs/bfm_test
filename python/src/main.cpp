@@ -550,6 +550,11 @@ PYBIND11_MODULE(w2, m) {
     // Optional module docstring
     m.doc() = "pybind11 for w2 code";
 
+    py::class_<convex_hull>(m, "convex_hull")
+        .def(py::init<int>(), "Constructor that initializes the convex hull with a given size.")
+        .def_readwrite("indices", &convex_hull::indices, "Array of indices for the convex hull.")
+        .def_readwrite("hullCount", &convex_hull::hullCount, "Number of points in the convex hull.");
+
     py::class_<BFM>(m, "BFM")
         .def(py::init<int, int, py::array_t<double> &>())
         .def("ctransform", &BFM::ctransform, "Compute c-transform on dual and phi")
@@ -568,4 +573,5 @@ PYBIND11_MODULE(w2, m) {
         .def("sampling_pushforward", &BFM::sampling_pushforward, "Sample values in the pushforward map")
         .def("compute_dual_indices", &BFM::compute_dual_indices, "Compute dual indices")
         .def("compute_dual_indices_py", &BFM::compute_dual_indices_py, "Compute dual indices");
+
 }

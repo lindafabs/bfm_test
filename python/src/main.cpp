@@ -420,6 +420,125 @@ convex_hull* hull;
         }
     }
 
+    void compute_dual_py(py::array_t<double> &dual_np, py::array_t<double> &u_np, py::array_t<int> &dualIndices_np, convex_hull *hull, int n) {
+        // Request buffer information for the arrays
+        py::buffer_info dual_buf = dual_np.request();
+        py::buffer_info u_buf = u_np.request();
+        py::buffer_info dualIndices_buf = dualIndices_np.request();
+    
+        // Access the data pointers for the arrays
+        double *dual = static_cast<double *>(dual_buf.ptr);
+        double *u = static_cast<double *>(u_buf.ptr);
+        int *dualIndices = static_cast<int *>(dualIndices_buf.ptr);
+    
+        // Get convex hull and compute dual indices
+        get_convex_hull(u, hull, n);
+        compute_dual_indices(dualIndices, u, hull, n);
+    
+        // Compute dual values
+        for (int i = 0; i < n; i++) {
+            double s = (i + 0.5) / (n * 1.0);
+            int index = dualIndices[i];
+            double x = (index + 0.5) / (n * 1.0);
+            double v1 = s * x - u[dualIndices[i]];
+            double v2 = s * (n - 0.5) / (n * 1.0) - u[n - 1];
+            if (v1 > v2) {
+                dual[i] = v1;
+            } else {
+                dualIndices[i] = n - 1;
+                dual[i] = v2;
+            }
+        }
+    }
+
+    void get_convex_hull_py(py::array_t<double> &u_np, convex_hull *hull, int n) {
+        // Request buffer information for the input array
+        py::buffer_info u_buf = u_np.request();
+    
+        // Access the data pointer for the array
+        double *u = static_cast<double *>(u_buf.ptr);
+    
+        // Set the first two indices of the convex hull
+        hull->indices[0] = 0;
+        hull->indices[1] = 1;
+        hull->hullCount = 2;
+    
+        // Add remaining points to the convex hull
+        for (int i = 2; i < n; i++) {
+            add_point(u, hull, i);
+        }
+    }
+
+    void compute_2d_dual_inside_py(py::array_t<double> &dual_np, py::array_t<double> &u_np, convex_hull *hull, int n1, int n2) {
+        // Request buffer information for the input arrays
+        py::buffer_info u_buf = u_np.request();
+        py::buffer_info dual_buf = dual_np.request();
+    
+        // Access the data pointers for the arrays
+        double *u = static_cast<double *>(u_buf.ptr);
+        double *dual = static_cast<double *>(dual_buf.ptr);
+    
+        int pcount = n1 * n2;
+        int n = fmax(n1, n2);
+    
+        // Copy the input u array to the temp array
+        memcpy(temp, u, pcount * sizeof(double));
+    
+        // Perform dual computation for each row (y-axis)
+        for (int i = 0; i < n2; i++) {
+            compute_dual(&dual[i * n1], &temp[i * n1], argmin, hull, n1);
+        }
+    
+        // Transpose the result from the temp array to the dual array
+        transpose_doubles(temp, dual, n1, n2);
+        
+        // Negate the values in the dual array
+        for (int i = 0; i < n1 * n2; i++) {
+            dual[i] = -temp[i];
+        }
+    
+        // Perform dual computation for each column (x-axis)
+        for (int j = 0; j < n1; j++) {
+            compute_dual(&temp[j * n2], &dual[j * n2], argmin, hull, n2);
+        }
+    
+        // Transpose the result back to the dual array
+        transpose_doubles(dual, temp, n2, n1);
+    }
+    void compute_dual_indices_py(py::array_t<int> &dualIndicies_np, py::array_t<double> &u_np, convex_hull *hull, int n) {
+        // Request buffer information for the input arrays
+        py::buffer_info u_buf = u_np.request();
+        py::buffer_info dualIndicies_buf = dualIndicies_np.request();
+    
+        // Access the data pointers for the arrays
+        double *u = static_cast<double *>(u_buf.ptr);
+        int *dualIndicies = static_cast<int *>(dualIndicies_buf.ptr);
+    
+        int counter = 1;
+        int hc = hull->hullCount;
+    
+        // Loop to compute dual indices
+        for (int i = 0; i < n; i++) {
+            double s = (i + 0.5) / (n * 1.0);
+            int ic1 = hull->indices[counter];
+            int ic2 = hull->indices[counter - 1];
+    
+            // Compute slope between two indices
+            double slope = n * (u[ic1] - u[ic2]) / (ic1 - ic2);
+    
+            // Find the appropriate hull index
+            while (s > slope && counter < hc - 1) {
+                counter++;
+                ic1 = hull->indices[counter];
+                ic2 = hull->indices[counter - 1];
+                slope = n * (u[ic1] - u[ic2]) / (ic1 - ic2);
+            }
+    
+            // Assign the index to dualIndicies
+            dualIndicies[i] = hull->indices[counter - 1];
+        }
+    }
+
 };
 
 
@@ -437,12 +556,16 @@ PYBIND11_MODULE(w2, m) {
         .def("pushforward", &BFM::pushforward, "Compute the pushforward map for nu")
         .def("compute_w2", &BFM::compute_w2, "Compute W2 distance between mu and nu")
         .def("compute_2d_dual_inside", &BFM::compute_2d_dual_inside, "Compute 2D dual inside")
+        .def("compute_2d_dual_inside_py", &BFM::compute_2d_dual_inside_py, "Compute 2D dual inside")
         .def("compute_dual", &BFM::compute_dual, "Compute dual function based on indices and hull")
+        .def("compute_dual_py", &BFM::compute_dual_py, "Compute dual function based on indices and hull")
         .def("transpose_doubles", &BFM::transpose_doubles, "Transpose a double array")
         .def("get_convex_hull", &BFM::get_convex_hull, "Get convex hull indices")
+        .def("get_convex_hull_py", &BFM::get_convex_hull_py, "Get convex hull indices")
         .def("add_point", &BFM::add_point, "Add a point to the convex hull")
         .def("interpolate_function", &BFM::interpolate_function, "Interpolate values from the function")
         .def("calc_pushforward_map", &BFM::calc_pushforward_map, "Calculate the pushforward map")
         .def("sampling_pushforward", &BFM::sampling_pushforward, "Sample values in the pushforward map")
         .def("compute_dual_indices", &BFM::compute_dual_indices, "Compute dual indices");
+        .def("compute_dual_indices_py", &BFM::compute_dual_indices_py, "Compute dual indices");
 }

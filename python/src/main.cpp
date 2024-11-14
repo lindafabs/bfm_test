@@ -185,10 +185,12 @@ convex_hull* hull;
     void compute_dual(double *dual, double *u, int *dualIndicies, convex_hull *hull, int n){
         py::print("I am inside compute_dual function");
 
-    
+        py::print("Before Convex hull");
         get_convex_hull(u, hull, n);
-        py::print("Convex hull indices:", py::cast(std::vector<int>(hull->indices, hull->indices + hull->hullCount)));
-
+        py::print("After Convex hull");
+        std::vector<int> hull_indices_vec(hull->indices, hull->indices + hull->hullCount);
+        py::object hull_indices = py::cast(hull_indices_vec);
+        py::print("Convex hull indices:", hull_indices);
         
         compute_dual_indices(dualIndicies, u, hull, n);
         py::print("These are the dual indices:", py::cast(std::vector<int>(dualIndicies, dualIndicies + n)));

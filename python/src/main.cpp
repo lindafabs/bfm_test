@@ -309,6 +309,9 @@ convex_hull* hull;
             dualIndicies[i]=hull->indices[counter-1];
             
         }
+
+        py::print("dualIndicies:", py::cast(std::vector<int>(dualIndicies, dualIndicies + n)));
+
     }
 
 

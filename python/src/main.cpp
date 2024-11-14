@@ -155,70 +155,43 @@ convex_hull* hull;
         int n=fmax(n1,n2);
         memcpy(temp, u, pcount*sizeof(double));
         
-        std::cout << "Computing 2D dual inside" << std::endl;
+        py::print("Computing 2D dual inside");
         for(int i=0;i<n2;i++){
-            std::cout << "Iterating over the rows, row: " << i << std::endl;
-            compute_dual(&dual[i*n1], &temp[i*n1], argmin, hull, n1);
-            
+            py::print("Iterating over the rows, row:", i);
+            compute_dual(&dual[i*n1], &temp[i*n1], argmin, hull, n1);   
         }
 
     
-        std::cout << "This is the dual before transpose: ";
-        for (int i = 0; i < pcount; ++i) {
-            std::cout << dual[i] << " ";
-        }
-        std::cout << std::endl;
-
-        
+        py::print("This is the dual before transpose:", py::cast(std::vector<double>(dual, dual + pcount)));
         transpose_doubles(temp, dual, n1, n2);
-    
-        std::cout << "This is the dual after 1st transpose: ";
-        for (int i = 0; i < pcount; ++i) {
-            std::cout << temp[i] << " ";
-        }
-        std::cout << std::endl;
+        py::print("This is the dual after 1st transpose:", py::cast(std::vector<double>(temp, temp + pcount)));
+
 
         for(int i=0;i<n1*n2;i++){
             dual[i]=-temp[i];
         }
-
-        std::cout << "This is the dual after negation and before the 2nd transform: ";
-        for (int i = 0; i < pcount; ++i) {
-            std::cout << dual[i] << " ";
-        }
-        std::cout << std::endl;
+        py::print("This is the dual after negation and before the 2nd transform:", py::cast(std::vector<double>(dual, dual + pcount)));
 
         for(int j=0;j<n1;j++){
-            std::cout << "Iterating over the columns, column: " << j << std::endl;
+            py::print("Iterating over the columns, column:", j);
             compute_dual(&temp[j*n2], &dual[j*n2], argmin, hull, n2);
             
         }
         transpose_doubles(dual, temp, n2, n1);
-        std::cout << "This is the dual after the final transpose: ";
-        for (int i = 0; i < pcount; ++i) {
-            std::cout << dual[i] << " ";
-        }
-        std::cout << std::endl;
+        py::print("This is the dual after the final transpose:", py::cast(std::vector<double>(dual, dual + pcount)));
     }
 
 
     void compute_dual(double *dual, double *u, int *dualIndicies, convex_hull *hull, int n){
-        std::cout << "I am inside compute_dual function" << std::endl;
+        py::print("I am inside compute_dual function");
+
+    
+        get_convex_hull(u, hull, n);
+        py::print("Convex hull indices:", py::cast(std::vector<int>(hull->indices, hull->indices + hull->hullCount)));
 
         
-        get_convex_hull(u, hull, n);
-        std::cout << "Convex hull indices: ";
-        for (int i = 0; i < hull->hullCount; ++i) {
-            std::cout << hull->indices[i] << " ";
-        }
-        std::cout << std::endl;
-        
         compute_dual_indices(dualIndicies, u, hull, n);
-        std::cout << "These are the dual indices: ";
-        for (int i = 0; i < n; ++i) {
-            std::cout << dualIndicies[i] << " ";
-        }
-        std::cout << std::endl;
+        py::print("These are the dual indices:", py::cast(std::vector<int>(dualIndicies, dualIndicies + n)));
 
         
         for(int i=0;i<n;i++){
@@ -237,11 +210,7 @@ convex_hull* hull;
         }
 
 
-        std::cout << "This is the dual vector: ";
-        for (int i = 0; i < n; ++i) {
-            std::cout << dual[i] << " ";
-        }
-        std::cout << std::endl;
+        py::print("This is the dual vector:", py::cast(std::vector<double>(dual, dual + n)));
         
     }
 

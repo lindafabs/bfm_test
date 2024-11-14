@@ -1,6 +1,5 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
-#include <iostream>
 
 namespace py = pybind11;
 
@@ -152,49 +151,34 @@ convex_hull* hull;
     void compute_2d_dual_inside(double *dual, double *u, convex_hull *hull, int n1, int n2){
         
         int pcount=n1*n2;
+        
         int n=fmax(n1,n2);
+        
         memcpy(temp, u, pcount*sizeof(double));
         
-        py::print("Computing 2D dual inside");
+        
         for(int i=0;i<n2;i++){
-            py::print("Iterating over the rows, row:", i);
-            compute_dual(&dual[i*n1], &temp[i*n1], argmin, hull, n1);   
+            compute_dual(&dual[i*n1], &temp[i*n1], argmin, hull, n1);
+            
         }
-
-    
-        py::print("This is the dual before transpose:", py::cast(std::vector<double>(dual, dual + pcount)));
         transpose_doubles(temp, dual, n1, n2);
-        py::print("This is the dual after 1st transpose:", py::cast(std::vector<double>(temp, temp + pcount)));
-
-
         for(int i=0;i<n1*n2;i++){
             dual[i]=-temp[i];
         }
-        py::print("This is the dual after negation and before the 2nd transform:", py::cast(std::vector<double>(dual, dual + pcount)));
-
         for(int j=0;j<n1;j++){
-            py::print("Iterating over the columns, column:", j);
             compute_dual(&temp[j*n2], &dual[j*n2], argmin, hull, n2);
             
         }
         transpose_doubles(dual, temp, n2, n1);
-        py::print("This is the dual after the final transpose:", py::cast(std::vector<double>(dual, dual + pcount)));
     }
 
 
     void compute_dual(double *dual, double *u, int *dualIndicies, convex_hull *hull, int n){
-        py::print("I am inside compute_dual function");
-
-        py::print("Before Convex hull");
+        
         get_convex_hull(u, hull, n);
-        py::print("After Convex hull");
-        std::vector<int> hull_indices_vec(hull->indices, hull->indices + hull->hullCount);
-        py::object hull_indices = py::cast(hull_indices_vec);
-        py::print("Convex hull indices:", hull_indices);
+       
         
         compute_dual_indices(dualIndicies, u, hull, n);
-        py::print("These are the dual indices:", py::cast(std::vector<int>(dualIndicies, dualIndicies + n)));
-
         
         for(int i=0;i<n;i++){
             double s=(i+.5)/(n*1.0);
@@ -210,9 +194,6 @@ convex_hull* hull;
             }
             
         }
-
-
-        py::print("This is the dual vector:", py::cast(std::vector<double>(dual, dual + n)));
         
     }
 
@@ -440,6 +421,7 @@ convex_hull* hull;
     }
 
 };
+
 
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---

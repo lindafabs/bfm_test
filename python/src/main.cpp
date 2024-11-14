@@ -566,6 +566,6 @@ PYBIND11_MODULE(w2, m) {
         .def("interpolate_function", &BFM::interpolate_function, "Interpolate values from the function")
         .def("calc_pushforward_map", &BFM::calc_pushforward_map, "Calculate the pushforward map")
         .def("sampling_pushforward", &BFM::sampling_pushforward, "Sample values in the pushforward map")
-        .def("compute_dual_indices", &BFM::compute_dual_indices, "Compute dual indices");
+        .def("compute_dual_indices", &BFM::compute_dual_indices, "Compute dual indices")
         .def("compute_dual_indices_py", &BFM::compute_dual_indices_py, "Compute dual indices");
 }
